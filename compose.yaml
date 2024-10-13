@@ -1,0 +1,83 @@
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
+
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
+
+networks:
+  myNetwork:
+
+services:
+  reservation:
+    container_name: reservation
+    build:
+      context: ./RC-Backend
+    ports:
+      - 8082:8082
+    depends_on:
+      - kafka
+      - mongo
+    networks:
+      - myNetwork
+  
+  authentication:
+    container_name: authentication
+    build:
+      context: ./RC-Auth
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+    networks:
+      - myNetwork
+
+  gateway:
+    container_name: gateway
+    build:
+      context: ./Gateway-Spring-Cloud
+    ports:
+      - 8080:8080
+    networks:
+      - myNetwork
+
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    networks:
+      - myNetwork
+
+  mongo:
+    container_name: mongo
+    image: mongo
+    # restart: always
+    ports:
+     - 27018:27017
+    volumes:
+      - db-config:/data/configdb
+      - ./mongo/data:/data/db
+    networks:
+      - myNetwork
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: example
+
+volumes:
+  db-config:
+
