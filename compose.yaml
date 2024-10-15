@@ -71,7 +71,7 @@ services:
      - 27018:27017
     volumes:
       - db-config:/data/configdb
-      - ./mongo/data:/data/db
+      - db-data:/data/db
     networks:
       - myNetwork
     # environment:
@@ -80,4 +80,5 @@ services:
 
 volumes:
   db-config:
+  db-data:
 
